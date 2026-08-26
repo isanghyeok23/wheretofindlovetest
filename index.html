@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>공생호프 신청 — 2026.09.10</title>
-<meta name="description" content="공과대학 학생회 P:ONE X 생활과학대학 학생회 FOREST — 공생호프 신청">
-<meta property="og:title" content="공생호프 — 2026.09.10 (THU)">
+<title>WHERE TO FIND LOVE? 신청 — 2026.09.10</title>
+<meta name="description" content="공과대학 학생회 P:ONE X 생활과학대학 학생회 FOREST — WHERE TO FIND LOVE? 신청">
+<meta property="og:title" content="WHERE TO FIND LOVE? — 2026.09.10 (THU)">
 <meta property="og:description" content="72분 소개팅 · 솔로파티 · 로테이션 소개팅">
 <meta property="og:image" content="og-image.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -306,7 +306,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--line-2);
     </div>
 
     <div class="hero">
-      <h1>공생호프</h1>
+      <h1>WHERE TO FIND LOVE?</h1>
       <div class="when"><span>2026. 09. 10 (THU)</span><span class="dday" id="dday">D-</span></div>
     </div>
 
@@ -378,7 +378,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--line-2);
    설정 — 이 두 줄만 바꾸면 됩니다
    ═══════════════════════════════════════════════════════ */
 const API_URL = 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';   // Apps Script 웹앱 배포 URL
-const IG = { pone:'pnu_pone', forest:'pnu_forest' };  // 인스타 아이디 (@ 없이)
+const IG = { pone:'pnu_eng_p1', forest:'pnu_forest' };  // 인스타 아이디 (@ 없이)
 
 const EVENT_DATE = '2026-09-10';
 
@@ -548,8 +548,7 @@ function startForm(id){
     time:0, time2:0, gender:'', headcount:(id === 'min72' ? 0 : 2),
     gongsaengCount:0, grades:['',''],
     leader:emptyM(), members:[],
-    teamName:'', mood:'', avoid:'', item:'', drink:'', allergy:'',
-    intro:'', tags:[], smoke:'',
+    teamName:'', mood:'', avoid:'', item:'', intro:'',
     agreePrivacy:false, agreeRefund:false, agreeMembers:false,
     depositName:'', step:0
   };
@@ -803,16 +802,10 @@ function stExtra(){
 
   if(S.id === 'min72' && S.track === 'meeting'){
     d.appendChild(field('팀 분위기', true, opts('mood',
-      [{v:'조용',t:'조용하게 대화하는 편'},{v:'보통',t:'보통'},{v:'활발',t:'활발하고 텐션 높은 편'}],
-      S.mood, function(v){ S.mood=v; }), '상대 팀을 정하는 가장 큰 기준입니다.'));
+      [{v:'외향적',t:'외향적'},{v:'내성적',t:'내성적'}],
+      S.mood, function(v){ S.mood=v; }, true), '상대 팀을 정하는 가장 큰 기준입니다.'));
     d.appendChild(field('지참할 소지품', false, inp(S,'item','예: 열쇠고리, 립밤'),
       '팀별로 소지품 1개를 반드시 가져오셔야 합니다.'));
-  }
-  if(S.id === 'solo'){
-    d.appendChild(field('주량', true, opts('drink',
-      [{v:'안마심',t:'거의 안 마셔요'},{v:'조금',t:'조금 마셔요'},{v:'잘마심',t:'잘 마셔요'}],
-      S.drink, function(v){ S.drink=v; }), '주류 무제한 파티라 안전 관리에 사용합니다.'));
-    d.appendChild(field('알레르기 · 못 먹는 음식', false, inp(S,'allergy','없으면 비워두세요')));
   }
   if(S.id === 'rota'){
     d.appendChild(field('나를 두 문장으로', true, (function(){
@@ -820,12 +813,6 @@ function stExtra(){
       t.value = S.intro; t.oninput = function(){ S.intro = t.value; };
       return t;
     })(), '최대 80자'));
-    d.appendChild(field('관심사 · 취미 (최대 3개)', true, tags(
-      ['운동','여행','음악','영화','게임','요리','카페','전시','독서','반려동물','패션','사진'])));
-    const two = el('<div class="two-col"></div>');
-    two.appendChild(field('흡연', true, opts('smoke',[{v:'비흡연',t:'비흡연'},{v:'흡연',t:'흡연'}], S.smoke, function(v){S.smoke=v;}, true)));
-    two.appendChild(field('음주', true, opts('drink',[{v:'조금',t:'조금'},{v:'잘마심',t:'잘 마심'}], S.drink, function(v){S.drink=v;}, true)));
-    d.appendChild(two);
   }
   if(!(S.id === 'min72' && S.track === 'general')){
     d.appendChild(field('피하고 싶은 사람', false, inp(S,'avoid','이름 · 학과 (없으면 비워두세요)'),
@@ -835,7 +822,7 @@ function stExtra(){
   d.appendChild(el('<div style="height:10px"></div>'));
   d.appendChild(terms('개인정보 수집·이용 안내',
     '<p><b>수집 항목</b> 이름, 연락처, 단과대·학과, 학번, 학년</p>' +
-    '<p><b>수집 목적</b> 공생호프 행사 운영, 팀 배정 및 참가 안내</p>' +
+    '<p><b>수집 목적</b> WHERE TO FIND LOVE? 행사 운영, 팀 배정 및 참가 안내</p>' +
     '<p><b>보유 기간</b> 행사 종료 후 즉시 파기</p>' +
     '<p><b>제3자 제공</b> 없음. 팀 배정에 필요한 최소 정보만 행사 당일 현장에서 사용합니다.</p>' +
     '<p>동의를 거부할 수 있으나, 거부 시 신청이 불가능합니다.</p>'));
@@ -926,12 +913,7 @@ function validateStep(name){
   }
   if(name === 'extra'){
     if(S.id === 'min72' && S.track === 'meeting' && !S.mood) return '팀 분위기를 선택해 주세요.';
-    if(S.id === 'solo' && !S.drink) return '주량을 선택해 주세요.';
-    if(S.id === 'rota'){
-      if(!S.intro.trim()) return '자기소개를 입력해 주세요.';
-      if(!S.tags.length)  return '관심사를 하나 이상 골라주세요.';
-      if(!S.smoke || !S.drink) return '흡연·음주 여부를 선택해 주세요.';
-    }
+    if(S.id === 'rota' && !S.intro.trim()) return '자기소개를 입력해 주세요.';
     if(!S.agreePrivacy) return '개인정보 수집·이용에 동의해 주세요.';
     if(!S.agreeRefund)  return '취소·환불 규정 확인에 체크해 주세요.';
     return null;
@@ -968,8 +950,7 @@ async function submit(){
   body.set('depositName', S.depositName || S.leader.name);
   body.set('teamName', S.teamName);
   body.set('mood', S.mood); body.set('avoid', S.avoid); body.set('item', S.item);
-  body.set('drink', S.drink); body.set('allergy', S.allergy);
-  body.set('intro', S.intro); body.set('tags', (S.tags||[]).join(', ')); body.set('smoke', S.smoke);
+  body.set('intro', S.intro);
   body.set('agreePrivacy', S.agreePrivacy); body.set('agreeRefund', S.agreeRefund);
   body.set('agreeMembers', S.agreeMembers);
 
@@ -1093,26 +1074,6 @@ function chk(key, text){
 function terms(title, html){
   return el('<details class="terms"><summary>' + esc(title) + ' 보기</summary><div class="in">' + html + '</div></details>');
 }
-function tags(list){
-  const g = el('<div class="opts" style="grid-template-columns:repeat(3,1fr)"></div>');
-  list.forEach(function(v){
-    const lb = el('<label class="opt chk" style="padding:10px 12px;font-size:14px">' +
-      '<input type="checkbox"><span class="mk" style="width:16px;height:16px"></span>' +
-      '<span class="main">' + esc(v) + '</span></label>');
-    const i = lb.querySelector('input');
-    i.checked = S.tags.indexOf(v) >= 0; lb.classList.toggle('on', i.checked);
-    i.onchange = function(){
-      if(i.checked){
-        if(S.tags.length >= 3){ i.checked = false; flash('관심사는 최대 3개까지 고를 수 있습니다.'); return; }
-        S.tags.push(v);
-      } else S.tags = S.tags.filter(function(x){ return x !== v; });
-      lb.classList.toggle('on', i.checked);
-    };
-    g.appendChild(lb);
-  });
-  return g;
-}
-
 /* ═══════════════ 임시 저장 ═══════════════ */
 function saveDraft(){ try{ localStorage.setItem(LS_KEY, JSON.stringify({ at:Date.now(), s:S })); }catch(e){} }
 function loadDraft(id){
