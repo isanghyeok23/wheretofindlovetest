@@ -1032,10 +1032,14 @@ async function submit(){
 
   let res = null, why = '';
   for(var attempt = 0; attempt < 2 && !res; attempt++){
+    let r = null;
+    try{ r = await fetch(API_URL, { method:'POST', body: body }); }
+    catch(e){ why = 'POST전송:' + (e && e.message ? e.message : e); continue; }
     try{
-      const r = await fetch(API_URL, { method:'POST', body: body });
-      res = await r.json();
-    }catch(e){ why = 'POST:' + (e && e.message ? e.message : e); }
+      const txt = await r.text();
+      try{ res = JSON.parse(txt); }
+      catch(pe){ why = 'POST본문:HTTP' + r.status + ' [' + txt.slice(0,100).replace(/\s+/g,' ') + ']'; }
+    }catch(e){ why = 'POST읽기:HTTP' + r.status + ':' + (e && e.message ? e.message : e); }
   }
   if(!res){                                  // POST 가 막히면 <script> 우회로로 한 번 더
     try{
@@ -1269,7 +1273,47 @@ async function diagRun(out){
     put('4) status      ok=' + j.ok + ' phase=' + j.phase + ' 프로그램=' + Object.keys(j.programs||{}).join(','));
   }catch(e){ put('4) status      실패: ' + (e && e.message ? e.message : e)); }
   put('');
+
+  // 5·6) 실제 제출과 똑같은 내용을 보내본다 (테스트용 가짜 데이터)
+  const d = new URLSearchParams();
+  d.set('program','솔로파티'); d.set('track',''); d.set('time','1');
+  d.set('gender','여'); d.set('headcount','2'); d.set('gongsaengCount','0');
+  d.set('name','진단테스트'); d.set('birth','2004'); d.set('college','공과대학');
+  d.set('dept','조선해양공학과'); d.set('sid','23학번'); d.set('grade','');
+  d.set('phone','01000000000');
+  d.set('members', JSON.stringify([{ name:'진단테스트2', birth:'2005', college:'생활과학대학',
+    dept:'의류학과', sid:'24학번', grade:'', phone:'01000000001' }]));
+  d.set('depositName','진단테스트0000'); d.set('teamName','');
+  d.set('mood','외향적'); d.set('avoid',''); d.set('item',''); d.set('intro','');
+  d.set('agreePrivacy','true'); d.set('agreeRefund','true'); d.set('agreeMembers','true');
+  put('보낼 길이 ' + d.toString().length + '자');
+  put('');
+
+  var r5 = null;
+  try{
+    const t = Date.now();
+    r5 = await fetch(API_URL, { method:'POST', body:d });
+    put('5) 실제제출 POST  HTTP ' + r5.status + '  ' + (Date.now()-t) + 'ms');
+  }catch(e){ put('5) 실제제출 POST  전송 실패: ' + (e && e.message ? e.message : e)); }
+  if(r5){
+    try{
+      const b = await r5.text();
+      put('   본문 ' + b.length + '자');
+      put('   ' + b.slice(0, 300).replace(/\s+/g, ' '));
+    }catch(e){ put('   본문 읽기 실패: ' + (e && e.message ? e.message : e)); }
+  }
+  put('');
+
+  try{
+    const q = new URLSearchParams(d); q.set('action','submit');
+    const t = Date.now();
+    const j = await jsonp(q, 30000);
+    put('6) 실제제출 JSONP ' + JSON.stringify(j).slice(0,300) + '  ' + (Date.now()-t) + 'ms');
+  }catch(e){ put('6) 실제제출 JSONP 실패: ' + (e && e.message ? e.message : e)); }
+
+  put('');
   put('— 이 화면을 그대로 캡처해서 보내주세요 —');
+  put('(진단테스트 줄은 나중에 resetSubmissions 로 지워집니다)');
 }
 if(location.search.indexOf('diag') >= 0) openDiag();
 
