@@ -772,7 +772,7 @@ function memberFields(m){
   two.appendChild(field('단과대', true, sel(m,'college',COLLEGES,'선택')));
   two.appendChild(field('학번', true, sel(m,'sid',SIDS,'선택')));
   box.appendChild(two);
-  box.appendChild(field('학과', true, inp(m,'dept','예: 기계공학부')));
+  box.appendChild(field('학과', true, inp(m,'dept','예: 조선해양공학과')));
   if(S.id === 'rota'){
     box.appendChild(field('학년', true, (function(){
       const v = el('<input type="text" readonly>');
