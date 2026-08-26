@@ -730,11 +730,11 @@ function stLeader(){
   d.appendChild(el('<p class="lead">연락은 대표자에게만 갑니다. 정확히 입력해 주세요.</p>'));
   d.appendChild(memberFields(S.leader));
   d.appendChild(field('입금자명', true, (function(){
-    const i = el('<input type="text" placeholder="통장에 찍힐 이름">');
+    const i = el('<input type="text" placeholder="홍길동1234">');
     i.value = S.depositName || S.leader.name;
     i.oninput = function(){ S.depositName = i.value; };
     return i;
-  })(), '대표자 이름과 다르면 수정해 주세요. 입금 확인에 사용됩니다.'));
+  })(), '이름 뒤에 전화번호 끝 네 자리를 반드시 붙여주세요. (예: 홍길동1234)'));
   return d;
 }
 
