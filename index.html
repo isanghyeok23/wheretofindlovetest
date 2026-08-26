@@ -1220,6 +1220,59 @@ document.getElementById('btnBack').onclick = function(){
 });
 window.addEventListener('beforeunload', function(){ if(S) saveDraft(); });
 renderDday();
+/* ═══════════════ 진단 (주소 뒤에 ?diag 를 붙이면 열린다) ═══════════════ */
+function openDiag(){
+  const box = el('<div style="position:fixed;inset:0;z-index:99;background:#0B0E12;color:#DDE4EC;' +
+    'padding:calc(16px + env(safe-area-inset-top)) 14px 24px;overflow:auto;' +
+    'font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.75"></div>');
+  box.appendChild(el('<div style="font-size:15px;font-weight:700;margin-bottom:12px">연결 진단</div>'));
+  const out = el('<pre id="diagOut" style="white-space:pre-wrap;word-break:break-all;margin:0"></pre>');
+  box.appendChild(out);
+  document.body.appendChild(box);
+  diagRun(out);
+}
+async function diagRun(out){
+  const L = [];
+  function put(t){ L.push(t); out.textContent = L.join('\n'); }
+  put('주소  ' + location.href);
+  put('API   ' + API_URL);
+  put('');
+
+  try{
+    const t = Date.now();
+    const r = await fetch(API_URL + '?action=ping&x=' + t);
+    const b = (await r.text()).slice(0, 160);
+    put('1) fetch GET   HTTP ' + r.status + '  ' + (Date.now()-t) + 'ms');
+    put('   ' + b);
+  }catch(e){ put('1) fetch GET   실패: ' + (e && e.message ? e.message : e)); }
+  put('');
+
+  try{
+    const t = Date.now();
+    const j = await jsonp({ action:'ping' }, 15000);
+    put('2) JSONP       ' + JSON.stringify(j).slice(0,160) + '  ' + (Date.now()-t) + 'ms');
+  }catch(e){ put('2) JSONP       실패: ' + (e && e.message ? e.message : e)); }
+  put('');
+
+  try{
+    const q = new URLSearchParams(); q.set('action','ping');
+    const r = await fetch(API_URL, { method:'POST', body:q });
+    const b = (await r.text()).slice(0, 160);
+    put('3) fetch POST  HTTP ' + r.status);
+    put('   ' + b);
+  }catch(e){ put('3) fetch POST  실패: ' + (e && e.message ? e.message : e)); }
+  put('');
+
+  try{
+    const r = await fetch(API_URL + '?action=status&x=' + Date.now());
+    const j = await r.json();
+    put('4) status      ok=' + j.ok + ' phase=' + j.phase + ' 프로그램=' + Object.keys(j.programs||{}).join(','));
+  }catch(e){ put('4) status      실패: ' + (e && e.message ? e.message : e)); }
+  put('');
+  put('— 이 화면을 그대로 캡처해서 보내주세요 —');
+}
+if(location.search.indexOf('diag') >= 0) openDiag();
+
 loadStatus();
 setInterval(function(){ if(document.visibilityState === 'visible') loadStatus(); }, 25000);
 document.addEventListener('visibilitychange', function(){
