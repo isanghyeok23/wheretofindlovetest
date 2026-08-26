@@ -450,6 +450,17 @@ function jsonp(params, ms){
 }
 let JSONP_N = 0;
 
+/* 차단기·프록시가 name=/phone= 같은 파라미터 이름을 보고 요청을 막는 일이 있어서,
+   payload 전체를 base64 한 덩어리로 묶어 보내는 경로를 함께 둔다. */
+function packBody(sp){
+  const o = {};
+  sp.forEach(function(v, k){ o[k] = v; });
+  const bytes = new TextEncoder().encode(JSON.stringify(o));
+  let bin = '';
+  for(var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+
 /* ═══════════════ 상태 ═══════════════ */
 async function loadStatus(){
   let j = null;
@@ -1030,24 +1041,31 @@ async function submit(){
   body.set('agreePrivacy', S.agreePrivacy); body.set('agreeRefund', S.agreeRefund);
   body.set('agreeMembers', S.agreeMembers);
 
+  const packed = packBody(body);
   let res = null, why = '';
-  for(var attempt = 0; attempt < 2 && !res; attempt++){
+
+  async function tryPost(b, tag){
     let r = null;
-    try{ r = await fetch(API_URL, { method:'POST', body: body }); }
-    catch(e){ why = 'POST전송:' + (e && e.message ? e.message : e); continue; }
+    try{ r = await fetch(API_URL, { method:'POST', body: b }); }
+    catch(e){ why += ' ' + tag + '전송:' + (e && e.message ? e.message : e); return null; }
     try{
       const txt = await r.text();
-      try{ res = JSON.parse(txt); }
-      catch(pe){ why = 'POST본문:HTTP' + r.status + ' [' + txt.slice(0,100).replace(/\s+/g,' ') + ']'; }
-    }catch(e){ why = 'POST읽기:HTTP' + r.status + ':' + (e && e.message ? e.message : e); }
+      try{ return JSON.parse(txt); }
+      catch(pe){ why += ' ' + tag + '본문:HTTP' + r.status + '[' + txt.slice(0,80).replace(/\s+/g,' ') + ']'; }
+    }catch(e){ why += ' ' + tag + '읽기:HTTP' + r.status + ':' + (e && e.message ? e.message : e); }
+    return null;
   }
-  if(!res){                                  // POST 가 막히면 <script> 우회로로 한 번 더
-    try{
-      const q = new URLSearchParams(body); q.set('action', 'submit');
-      res = await jsonp(q, 30000);
-    }catch(e){ why += ' / JSONP:' + (e && e.message ? e.message : e); }
+
+  res = await tryPost(body, 'P1');                              // 1) 평범한 POST
+  if(!res){                                                     // 2) 묶음 JSONP — 차단기 우회
+    try{ res = await jsonp({ action:'submit', d:packed }, 30000); }
+    catch(e){ why += ' J:' + (e && e.message ? e.message : e); }
   }
-  if(!res){ res = { ok:false, code:'NET' }; LAST_ERR = why; }
+  if(!res){                                                     // 3) 묶음 POST
+    const pb = new URLSearchParams(); pb.set('d', packed);
+    res = await tryPost(pb, 'P2');
+  }
+  if(!res){ res = { ok:false, code:'NET' }; LAST_ERR = why.trim(); }
   btns.forEach(function(b){ b.disabled = false; });
   if(main) main.textContent = '신청 완료하기';
 
@@ -1310,6 +1328,27 @@ async function diagRun(out){
     const j = await jsonp(q, 30000);
     put('6) 실제제출 JSONP ' + JSON.stringify(j).slice(0,300) + '  ' + (Date.now()-t) + 'ms');
   }catch(e){ put('6) 실제제출 JSONP 실패: ' + (e && e.message ? e.message : e)); }
+  put('');
+
+  const packed = packBody(d);
+  put('묶음 길이 ' + packed.length + '자');
+  try{
+    const t = Date.now();
+    const j = await jsonp({ action:'submit', d:packed }, 30000);
+    put('7) 묶음 JSONP     ' + JSON.stringify(j).slice(0,300) + '  ' + (Date.now()-t) + 'ms');
+  }catch(e){ put('7) 묶음 JSONP     실패: ' + (e && e.message ? e.message : e)); }
+  put('');
+
+  var r8 = null;
+  try{
+    const pb = new URLSearchParams(); pb.set('d', packed);
+    r8 = await fetch(API_URL, { method:'POST', body:pb });
+    put('8) 묶음 POST      HTTP ' + r8.status);
+  }catch(e){ put('8) 묶음 POST      전송 실패: ' + (e && e.message ? e.message : e)); }
+  if(r8){
+    try{ const b = await r8.text(); put('   ' + b.slice(0,300).replace(/\s+/g,' ')); }
+    catch(e){ put('   본문 읽기 실패: ' + (e && e.message ? e.message : e)); }
+  }
 
   put('');
   put('— 이 화면을 그대로 캡처해서 보내주세요 —');
