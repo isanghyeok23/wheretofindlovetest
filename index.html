@@ -628,7 +628,7 @@ function stPlan(){
 
   if(S.id === 'min72'){
     d.appendChild(field('참여 방식', true, opts('track', [
-      { v:'meeting', t:'미팅 — 소개팅 참여', s:'동성 2인 또는 3인 팀' },
+      { v:'meeting', t:'미팅 — 소지품 소개팅 참여', s:'동성 2인 또는 3인 팀' },
       { v:'general', t:'단체석 — 소개팅 없이 자리만', s:'혼성 3~18명' }
     ], S.track, function(v){
       S.track = v; S.headcount = (v==='general') ? 3 : 2; S.gender = (v==='general') ? '혼성' : '';
