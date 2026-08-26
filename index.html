@@ -796,7 +796,7 @@ function stMembers(){
   });
   const lb = el('<label class="opt chk"><input type="checkbox"><span class="mk"></span>' +
     '<span class="main">팀원 전원에게 개인정보 제공 동의를 받았습니다' +
-    '<span class="sub">신청 후 팀원에게 안내 문자가 발송됩니다</span></span></label>');
+    '<span class="sub">개인정보는 행사 종료 후 6개월 이후에 파기합니다.</span></span></label>');
   const cb = lb.querySelector('input');
   cb.checked = S.agreeMembers; lb.classList.toggle('on', cb.checked);
   cb.onchange = function(){ S.agreeMembers = cb.checked; lb.classList.toggle('on', cb.checked); };
@@ -863,7 +863,7 @@ function stExtra(){
   }
   if(!(S.id === 'min72' && S.track === 'general')){
     d.appendChild(field('피하고 싶은 사람', false, inp(S,'avoid','이름 · 학과 (없으면 비워두세요)'),
-      '아는 사람과 마주치지 않도록 배정에 반영합니다.'));
+      '피할 수 없을 수도 있습니다. 피할 수 없다면 즐겨주세요.'));
   }
 
   d.appendChild(el('<div style="height:10px"></div>'));
