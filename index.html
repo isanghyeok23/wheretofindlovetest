@@ -428,15 +428,42 @@ let STATUS = null, S = null, restored = false, pendingId = null;
 let planSig = '', navBusy = false;
 const LS_KEY = 'gongsaeng2026';
 
+/* ═══════════════ 통신 ═══════════════ */
+/* fetch 가 막히는 환경(일부 인앱 브라우저·프록시·CORS)이 있어
+   <script> 태그로 부르는 우회 경로를 함께 둔다. 이쪽은 브라우저가 막지 않는다. */
+let LAST_ERR = '';
+function jsonp(params, ms){
+  return new Promise(function(resolve, reject){
+    const cb = 'wtfl' + (JSONP_N++) + '_' + (Date.now() % 1000000);
+    const sc = document.createElement('script');
+    let done = false;
+    function clean(){ try{ delete window[cb]; }catch(e){ window[cb] = undefined; }
+                      if(sc.parentNode) sc.parentNode.removeChild(sc); }
+    window[cb] = function(data){ done = true; clean(); resolve(data); };
+    sc.onerror = function(){ if(!done){ done = true; clean(); reject(new Error('LOAD')); } };
+    const q = new URLSearchParams(params);
+    q.set('callback', cb); q.set('t', String(Date.now()));
+    sc.src = API_URL + '?' + q.toString();
+    document.head.appendChild(sc);
+    setTimeout(function(){ if(!done){ done = true; clean(); reject(new Error('TIMEOUT')); } }, ms || 25000);
+  });
+}
+let JSONP_N = 0;
+
 /* ═══════════════ 상태 ═══════════════ */
 async function loadStatus(){
+  let j = null;
   try{
     const r = await fetch(API_URL + '?action=status&t=' + Date.now());
-    const j = await r.json();
-    // 응답 모양이 예상과 다르면(오류 페이지, 잘못된 URL 등) 상태 없음으로 처리.
-    // 잘못 파싱된 값 때문에 '접수 마감'이 뜨는 사고를 막는다.
-    STATUS = (j && j.ok === true && j.programs) ? j : null;
-  }catch(e){ STATUS = null; }
+    j = await r.json();
+  }catch(e){
+    LAST_ERR = 'GET:' + (e && e.message ? e.message : e);
+    try{ j = await jsonp({ action:'status' }, 15000); LAST_ERR = ''; }
+    catch(e2){ LAST_ERR += ' / JSONP:' + (e2 && e2.message ? e2.message : e2); j = null; }
+  }
+  // 응답 모양이 예상과 다르면(오류 페이지, 잘못된 URL 등) 상태 없음으로 처리.
+  // 잘못 파싱된 값 때문에 '접수 마감'이 뜨는 사고를 막는다.
+  STATUS = (j && j.ok === true && j.programs) ? j : null;
   renderPhase(); renderCards(); syncPlan();
 }
 
@@ -796,7 +823,7 @@ function stMembers(){
   });
   const lb = el('<label class="opt chk"><input type="checkbox"><span class="mk"></span>' +
     '<span class="main">팀원 전원에게 개인정보 제공 동의를 받았습니다' +
-    '<span class="sub">개인정보는 행사 종료 후 6개월 이후에 파기합니다.</span></span></label>');
+    '<span class="sub">동의 불가 시 신청 불가합니다.</span></span></label>');
   const cb = lb.querySelector('input');
   cb.checked = S.agreeMembers; lb.classList.toggle('on', cb.checked);
   cb.onchange = function(){ S.agreeMembers = cb.checked; lb.classList.toggle('on', cb.checked); };
@@ -1003,13 +1030,20 @@ async function submit(){
   body.set('agreePrivacy', S.agreePrivacy); body.set('agreeRefund', S.agreeRefund);
   body.set('agreeMembers', S.agreeMembers);
 
-  let res = null;
+  let res = null, why = '';
   for(var attempt = 0; attempt < 2 && !res; attempt++){
     try{
       const r = await fetch(API_URL, { method:'POST', body: body });
       res = await r.json();
-    }catch(e){ if(attempt === 1) res = { ok:false, code:'NET' }; }
+    }catch(e){ why = 'POST:' + (e && e.message ? e.message : e); }
   }
+  if(!res){                                  // POST 가 막히면 <script> 우회로로 한 번 더
+    try{
+      const q = new URLSearchParams(body); q.set('action', 'submit');
+      res = await jsonp(q, 30000);
+    }catch(e){ why += ' / JSONP:' + (e && e.message ? e.message : e); }
+  }
+  if(!res){ res = { ok:false, code:'NET' }; LAST_ERR = why; }
   btns.forEach(function(b){ b.disabled = false; });
   if(main) main.textContent = '신청 완료하기';
 
@@ -1020,7 +1054,8 @@ async function submit(){
       render(); window.scrollTo(0,0);
     }
     flash((res && res.message) ||
-      '전송에 실패했습니다. 네트워크를 확인하고 다시 시도해 주세요. 계속 실패하면 인스타 DM으로 연락 주세요.');
+      ('전송에 실패했습니다. 네트워크를 확인하고 다시 시도해 주세요. 계속 실패하면 인스타 DM으로 연락 주세요.' +
+       (LAST_ERR ? '  [' + LAST_ERR + ']' : '')));
     return;
   }
   clearDraft();
