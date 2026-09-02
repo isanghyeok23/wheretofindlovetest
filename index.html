@@ -391,6 +391,7 @@ const EVENT_DATE = '2026-09-10';
 /* ═══════════════════════════════════════════════════════
    데이터
    ═══════════════════════════════════════════════════════ */
+const OTHER_SCHOOLS = ['부산교육대학교'];
 const COLLEGES = ['공과대학','생활과학대학','인문대학','사회과학대학','자연과학대학','경영대학',
   '사범대학','예술대학','약학대학','간호대학','생명자원과학대학','나노과학기술대학',
   '정보의생명공학대학','의과대학','기타'];
@@ -860,12 +861,16 @@ function syncMembers(){
 function memberFields(m){
   const box = el('<div></div>');
   box.appendChild(field('이름', true, inp(m,'name','실명')));
-  box.appendChild(field('단과대', true, sel(m,'college',COLLEGES,'선택')));
+  box.appendChild(field('소속', true, affilSel(m),
+    OTHER_SCHOOLS.indexOf(m.college) >= 0
+      ? '부산교대 학우도 함께 신청하실 수 있습니다. 현장에서 학생증을 확인합니다.'
+      : '부산대는 단과대를, 타 대학은 학교를 골라주세요.'));
   const two = el('<div class="two-col"></div>');
   two.appendChild(field('학번', true, sel(m,'sid',SIDS,'선택')));
   two.appendChild(field('생년', true, birthSel(m)));
   box.appendChild(two);
-  box.appendChild(field('학과', true, inp(m,'dept','예: 조선해양공학과')));
+  box.appendChild(field('학과', true,
+    inp(m,'dept', OTHER_SCHOOLS.indexOf(m.college) >= 0 ? '예: 초등교육과' : '예: 조선해양공학과')));
   if(S.id === 'rota'){
     box.appendChild(field('학년', true, (function(){
       const v = el('<input type="text" readonly>');
@@ -916,7 +921,7 @@ function stExtra(){
 
   d.appendChild(el('<div style="height:10px"></div>'));
   d.appendChild(terms('개인정보 수집·이용 안내',
-    '<p><b>수집 항목</b> 이름, 생년, 연락처, 단과대·학과, 학번, 학년</p>' +
+    '<p><b>수집 항목</b> 이름, 생년, 연락처, 소속 학교·단과대·학과, 학번, 학년</p>' +
     '<p><b>수집 목적</b> WHERE TO FIND LOVE? 행사 운영, 팀 배정 및 참가 안내</p>' +
     '<p><b>보유 기간</b> 행사 종료 후 즉시 파기</p>' +
     '<p><b>제3자 제공</b> 없음. 팀 배정에 필요한 최소 정보만 행사 당일 현장에서 사용합니다.</p>' +
@@ -1026,7 +1031,7 @@ function validateStep(name){
 }
 function checkM(m, who){
   if(!m.name.trim())    return who + ' 이름을 입력해 주세요.';
-  if(!m.college)        return who + ' 단과대를 선택해 주세요.';
+  if(!m.college)        return who + ' 소속을 선택해 주세요.';
   if(!m.dept.trim())    return who + ' 학과를 입력해 주세요.';
   if(!m.sid)            return who + ' 학번을 선택해 주세요.';
   const by = String(m.birth || '');
@@ -1184,6 +1189,26 @@ function sel(obj, key, list, ph){
     s.appendChild(o);
   });
   s.onchange = function(){ obj[key] = s.value; };
+  return s;
+}
+function affilSel(m){
+  const s = el('<select></select>');
+  s.appendChild(el('<option value="">선택</option>'));
+  const g1 = el('<optgroup label="부산대학교"></optgroup>');
+  COLLEGES.forEach(function(v){
+    const o = el('<option></option>'); o.value = v; o.textContent = v;
+    if(m.college === v) o.selected = true;
+    g1.appendChild(o);
+  });
+  s.appendChild(g1);
+  const g2 = el('<optgroup label="타 대학"></optgroup>');
+  OTHER_SCHOOLS.forEach(function(v){
+    const o = el('<option></option>'); o.value = v; o.textContent = v;
+    if(m.college === v) o.selected = true;
+    g2.appendChild(o);
+  });
+  s.appendChild(g2);
+  s.onchange = function(){ m.college = s.value; render(); };
   return s;
 }
 function birthSel(m){
