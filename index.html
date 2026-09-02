@@ -735,9 +735,11 @@ function stPlan(){
     } else {
       d.appendChild(field('총 인원', true, numInput('headcount', 3, 18, '3 ~ 18'),
         '테이블은 4명당 1개씩 배정됩니다.'));
-      d.appendChild(field('이 중 공과대학 · 생활과학대학 학우는 몇 명인가요?', true,
-        numInput('gongsaengCount', 0, 18, '0'),
-        '1차 접수 기간에는 해당 인원만큼 1인당 1,000원 할인됩니다. 현장에서 학생증을 확인합니다.'));
+      if(STATUS && STATUS.discountActive){
+        d.appendChild(field('이 중 공과대학 · 생활과학대학 학우는 몇 명인가요?', true,
+          numInput('gongsaengCount', 0, 18, '0'),
+          '1차 접수 기간에는 해당 인원만큼 1인당 1,000원 할인됩니다. 현장에서 학생증을 확인합니다.'));
+      } else { S.gongsaengCount = 0; }
       d.appendChild(field('단체명', false, inp(S,'teamName','현장 호명용 · 없으면 비워두세요')));
     }
   } else {
