@@ -734,8 +734,8 @@ function stPlan(){
         [{v:2,t:'2인 팀 (2:2)'},{v:3,t:'3인 팀 (3:3)'}], S.headcount,
         function(v){ S.headcount=+v; syncMembers(); render(); }, true)));
     } else {
-      d.appendChild(field('총 인원', true, numInput('headcount', 3, 18, '3 ~ 18'),
-        '테이블은 4명당 1개씩 배정됩니다.'));
+      d.appendChild(field('총 인원', true, numInput('headcount', 3, 18, '3 ~ 18', true),
+        '테이블은 4명당 1개씩 배정됩니다. 인원을 입력하면 가능한 타임만 열립니다.'));
       if(STATUS && STATUS.discountActive){
         d.appendChild(field('이 중 공과대학 · 생활과학대학 학우는 몇 명인가요?', true,
           numInput('gongsaengCount', 0, 18, '0'),
@@ -806,7 +806,7 @@ function seatFor(t){
     n = (S.track === 'general') ? d.general.maxHeadcount
       : ((S.headcount === 3 ? d.trio : d.pair)[S.gender] || 0);
     if(S.track === 'general' && S.headcount > 0 && n > 0 && n < S.headcount){
-      return { text:'최대 ' + n + '명', cls:'full', dis:false };
+      return { text:'최대 ' + n + '명', cls:'full', dis:true };
     }
   } else {
     const d = (STATUS.programs[S.id === 'solo' ? '솔로파티' : '로테이션']||{})[t];
@@ -1174,10 +1174,16 @@ function inp(obj, key, ph){
   i.oninput = function(){ obj[key] = i.value; };
   return i;
 }
-function numInput(key, min, max, ph){
+function numInput(key, min, max, ph, rerender){
   const i = el('<input type="number" inputmode="numeric" min="'+min+'" max="'+max+'" placeholder="'+ph+'">');
   i.value = S[key] || (key === 'gongsaengCount' ? 0 : '');
   i.oninput = function(){ S[key] = +i.value || 0; };
+  // 타이핑 중에는 그대로 두고, 칸을 벗어날 때만 다시 그린다 (입력 중 포커스 유지)
+  if(rerender) i.onchange = function(){
+    S[key] = +i.value || 0;
+    if(S.time && seatFor(S.time).dis) S.time = 0;
+    render();
+  };
   return i;
 }
 function sel(obj, key, list, ph){
